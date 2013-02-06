@@ -35,7 +35,8 @@ Current ANE provides Device & Simulator support.
 #### getInterface() : String;
 
     Returns the current device ip.
-    When running in simulator it will return 0.0.0.0
+    When no connection is avalible it will return 0.0.0.0
+    Also when running in simulator it will return 0.0.0.0 but you can access it locating your current machine ip
 
 #### getModificationDateFormat() : String;
 
@@ -63,7 +64,7 @@ Current ANE provides Device & Simulator support.
 
 #### setEnabledActions(actions : String) : void;
 
-    Sets the avaliable server actions.
+    Comma separated string to set the avaliable server actions.
     By default all avaliable actions are enabled.
 
     Avaliable actions are:
@@ -72,6 +73,8 @@ Current ANE provides Device & Simulator support.
     * rename
     * listDir
     * upload
+    
+    e.g: setEnabledActions('createDir,delete');
 
 #### setModificationDateFormat(format : String) : void;
 
@@ -161,10 +164,16 @@ The current avaliable properties passed to the template are:
         Use this minimal template to access each file properties:
         
         {{#files}}
-            {{name}}
-            {{size}}
-            {{modification}}
+            {{type}} // can be file or dir
+            {{path}} // full file path
+            {{name}} // file name
+            {{size}} // file size in bytes
+            {{modification}} // modification date
         {{/files}}
+
+Basic Document root example is located at <a href="ANEFileSyncInterface/BasicDocumentRoot">BasicDocumentRoot directory</a>
+
+**Also you can find a working example of DocumentRoot inside the provided example/bundle dir**
 
 ---
 
@@ -202,6 +211,7 @@ The library uses the promise approach to interact with IOSFileSync methods, so y
            /*
                [
                     {
+                        path:'full file path',
                         name:'filename',
                         isDir:'true if file is a directory',
                         size:'the file size in bytes'
@@ -209,9 +219,9 @@ The library uses the promise approach to interact with IOSFileSync methods, so y
                ]
            */
         }
-        var fail = function( data )
+        var fail = function( error )
         {
-            // data.error will contain the error description
+            // error will contain the error description
             // posible errors are 'emptydir' 'notfound' 'serverNotFound'
         }
         IOSFileSync.listDir( dir ).then( success, fail );
@@ -234,4 +244,14 @@ The library uses the promise approach to interact with IOSFileSync methods, so y
             progresss
         );        
         
-        
+
+## Basic Example
+
+Inside the example folder you can find a minimal example that lets you upload an image to the server.
+The image will be shown at the device, after that you can click on "Get upload dir contents" to get a list of the files inside the upload dir.
+
+## License
+
+<!-- Creative Commons License -->
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/"><img alt="Creative Commons License" border="0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" class="cc-button"/></a><div class="cc-info"><span xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"><span id="work_title" property="dc:title">ANEFileSync</span> by <a rel="cc:attributionURL" property="cc:attributionName" href="http://www.xperiments.es">Pedro Casaubon</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 License</a>. <span rel="dc:source" href="https://github.com/xperiments/ANEFileSyncInterface"/></span></div>
+

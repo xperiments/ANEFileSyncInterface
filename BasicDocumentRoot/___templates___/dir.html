@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Directory Contents</title>
+  <link rel="stylesheet" href="/___templates___/style.css">
+</head>
+
+<body>
+
+  <div id="container">
+  
+    <h1>Directory Contents</h1>
+    
+    <table class="sortable">
+      <thead>
+        <tr>
+          <th>Filename</th>
+          <th>Size</th>
+          <th>Date Modified</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class='dir'>
+            <td><a href='{{parent}}'>Parent Folder</a></td>
+            <td><a href='{{path}}'>---</a></td>
+            <td><a href='{{path}}'>---</a></td>
+          </tr>      
+      {{#files}}	
+          <tr class='{{type}}'>
+            <td><a href='{{path}}'>{{name}}</a></td>
+            <td><a href='{{path}}'>{{size}}</a></td>
+            <td><a href='{{path}}'>{{modification}}</a></td>
+          </tr>
+      {{/files}}
+      </tbody>
+    </table>
+  
+    
+  </div>
+  
+</body>
+
+</html>

@@ -1,6 +1,6 @@
 <extension xmlns="http://ns.adobe.com/air/extension/3.2">
 	<id>es.xperiments.ane.filesyncinterface.ANEFileSync</id>
-	<versionNumber>0.0.186</versionNumber>
+	<versionNumber>0.0.192</versionNumber>
 		<platforms> 
 			<platform name="iPhone-ARM">
 				<applicationDeployment>

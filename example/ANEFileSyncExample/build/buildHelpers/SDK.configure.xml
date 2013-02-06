@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="FDT SDK CONFIG" basedir=".." default="SDK.configure">
+
+	<!-- IMPORT JARS -->
+	
+	<taskdef name="antform" classname="com.sardak.antform.AntForm" classpath="jars/antform.jar"/>
+	<taskdef resource="net/sf/antcontrib/antlib.xml" classpath="jars/ant-contrib-1.0b3.jar"/>
+
+
+	<propertyregex property="preferencesDir"
+              input="${osgi.instance.area}.metadata/.plugins/es.xperiments.fdt"
+              regexp="file:"
+              replace=""
+              casesensitive="false" />
+	<property name="preferencesFile" value="fdt.properties"/>
+	<target name="SDK.returnToBuild">
+		<ant antfile="FDT.publish.settings.xml"/>
+	</target>
+	<target name="SDK.configure" description=" ">
+		<property file="${preferencesDir}/${preferencesFile}">
+		</property>
+		<property name="SDK.configure.context" value="SDK.configure"/>
+		<antform title="Manage Installed SDK's">
+			<radioSelectionProperty label="Avaliable SDKS" property="es.xperiments.fdt.compile.selectedSDK" values="${es.xperiments.fdt.configuration.avaliableSDKDescriptions}"/>
+			<fileSelectionProperty directoryChooser="true" label="Select new SDK dir" property="es.xperiments.fdt.configuration.flexSDK"/>
+			<controlbar>
+
+				<button type="ok" label="Remove Selected SDK" target="SDK.removeSelected"/>
+				<button type="ok" label="Add SDK" target="SDK.processSDK"/>
+				<button type="ok" label="Exit"/>
+			</controlbar>
+		</antform>
+	</target>
+	<target name="SDK.editFromBuild">
+		<property file="${preferencesDir}/${preferencesFile}">
+		</property>
+		<property name="SDK.configure.context" value="SDK.editFromBuild"/>
+		<antform title="Manage Installed SDK's">
+			<radioSelectionProperty label="Avaliable SDKS" property="es.xperiments.fdt.compile.selectedSDK" values="${es.xperiments.fdt.configuration.avaliableSDKDescriptions}"/>
+			<fileSelectionProperty directoryChooser="true" label="Select new SDK dir" property="es.xperiments.fdt.configuration.flexSDK"/>
+			<controlbar>
+
+				<button type="ok" label="Remove Selected SDK" target="SDK.removeSelected"/>
+				<button type="ok" label="Add SDK" target="SDK.processSDK"/>
+				<button type="ok" label="Exit" target="SDK.returnToBuild"/>
+			</controlbar>
+		</antform>
+	</target>
+	<target name="SDK.processSDK">
+		<script language="javascript" manager="bsf" classpath="jars/*.jar;">
+			<classpath>
+				<fileset dir="jars" includes="*.jar">
+				</fileset>
+			</classpath>
+			<![CDATA[
+			importPackage(java.lang);
+			importPackage(java.io);
+			importPackage(java.util.zip);
+			importClass(java.util.Properties);
+			importClass(java.util.Scanner);
+			
+			
+			var XMLLoader = (function(undefined) {
+				
+				var load = function( file )
+				{
+
+					var data = new String(org.apache.tools.ant.util.FileUtils.readFully(new java.io.FileReader( file )));
+					data = data.replace(/<!--[\s\S]*?-->/g,'');
+					
+					if( data.indexOf('<?xml') == 0 )
+					{
+						var lines = data.match(/[^\r\n]+/g);
+							lines.shift();
+						
+						return new XML( lines.join('') );
+					}
+					else
+					{
+						
+						return new XML( data );
+					}
+				}
+				
+				return {
+					load:load
+				};
+
+			})();			
+			
+			processForm();
+			
+
+			
+			
+			function processForm()
+			{
+				var newSDK = project.getProperty('es.xperiments.fdt.configuration.flexSDK');
+				var currentSDKS = project.getProperty('es.xperiments.fdt.configuration.avaliableSDK')+'';
+				var currentSDKSList = currentSDKS.split(',');
+				var currentSDKDescription = project.getProperty('es.xperiments.fdt.configuration.avaliableSDKDescriptions')+'';
+				project.setProperty('es.xperiments.fdt.configuration.flexSDK','')
+				if( newSDK == "" )
+				{
+					var callTask = project.createTask("antcall");
+					callTask.setTarget( project.getProperty('SDK.configure.context') );			
+					callTask.execute();
+					return;
+				}
+				if( !checkSDKExist( currentSDKSList, newSDK ) )
+				{
+					
+					var sdkObject = getInfoSDK( newSDK );
+					if( sdkObject )
+					{
+						currentSDKDescription+=(currentSDKDescription.length>0 ? ',':'')+sdkInfoToString( sdkObject );
+						currentSDKS+=(currentSDKS.length>0 ? ',':'')+newSDK;
+						project.setProperty('es.xperiments.fdt.configuration.avaliableSDK', currentSDKS );
+						project.setProperty('es.xperiments.fdt.configuration.avaliableSDKDescriptions', currentSDKDescription );
+						
+					}
+					else
+					{
+						trace('[ERROR] Selected dir does not contain a valid SDK');
+						var callTask = project.createTask("antcall");
+						callTask.setTarget(project.getProperty('SDK.configure.context'));			
+						callTask.execute();
+						return;
+					}
+				}
+				else
+				{
+					trace('[ERROR] Selected SDK already exist');
+					var callTask = project.createTask("antcall");
+					callTask.setTarget(project.getProperty('SDK.configure.context'));			
+					callTask.execute();
+					return;
+				}
+	
+							
+			
+				var callTask = project.createTask("antcall");
+				callTask.setTarget("SDK.save");			
+				callTask.execute();
+				var callTask = project.createTask("antcall");
+				callTask.setTarget(project.getProperty('SDK.configure.context'));			
+				callTask.execute();			
+			}
+			
+			function checkSDKExist( avaliableSDKS, testSDK )
+			{
+				for( var i=0; i<avaliableSDKS.length; i++)
+				{
+					if( avaliableSDKS[i] == testSDK )
+					{
+
+						return true;
+					}
+				}
+
+				return false;
+			}
+			function sdkInfoToString( sdkinfo )
+			{
+				return [ sdkinfo.name,' (',sdkinfo.version,' ',sdkinfo.build,") [ Player: ",sdkinfo.targetPlayer, " -- SWF Version: ", sdkinfo.swfVersion,' ]' ].join('');
+			}
+			function getInfoSDK( path )
+			{			
+				// test if it is a valid sdk dir
+				var sdkDir = new File( path+'/flex-sdk-description.xml');
+				if( !sdkDir.exists() )
+				{
+					return false;
+				}
+			
+				var sdkDescription = XMLLoader.load( path+'/flex-sdk-description.xml');
+				var configData = XMLLoader.load( path+'/frameworks/flex-config.xml');
+				return {
+					name:sdkDescription.name,
+					version:sdkDescription.version,
+					build:sdkDescription.build,
+					targetPlayer:configData['target-player'],
+					swfVersion:configData['swf-version']
+				}
+			}
+			
+			function trace( str )
+			{
+				System.out.print( str+'\n');
+			}
+		]]>
+		</script>
+		
+	
+	</target>
+	<target name="SDK.removeSelected">
+
+		<script language="javascript" manager="bsf" classpath="jars/*.jar;">
+			<classpath>
+					   <fileset dir="jars" includes="*.jar"></fileset>
+			</classpath>
+		<![CDATA[
+			importPackage(java.lang);
+			importPackage(java.io);
+			importPackage(java.util.zip);
+			importClass(java.util.Properties);
+			importClass(java.util.Scanner);
+			
+			
+			function removeSelected()
+			{
+				var selected = project.getProperty('es.xperiments.fdt.compile.selectedSDK')+'';
+				var avaliableSDKSDescArray = ( project.getProperty('es.xperiments.fdt.configuration.avaliableSDKDescriptions')+'' ).split(',');;
+				var avaliableSDKSArray = ( project.getProperty('es.xperiments.fdt.configuration.avaliableSDK')+'' ).split(',');
+
+				var id = -1;
+				for( var i=0; i<avaliableSDKSDescArray.length; i++ )
+				{
+					if( avaliableSDKSDescArray[i] == selected )
+					{
+						id = i;
+						break;
+					}
+				}
+				
+				if ( id!=-1 )
+				{
+					var outputSDKDesc = [];
+					var outputSDK = [];
+					for( var i=0; i<avaliableSDKSDescArray.length; i++ )
+					{
+						if( i!=id)
+						{
+							outputSDKDesc.push( avaliableSDKSDescArray[i]);
+							outputSDK.push( avaliableSDKSArray[i]);
+						}
+					}
+					project.setProperty('es.xperiments.fdt.configuration.avaliableSDK', outputSDK.join(',') );
+					project.setProperty('es.xperiments.fdt.configuration.avaliableSDKDescriptions', outputSDKDesc.join(',') );					
+			
+					var callTask = project.createTask("antcall");
+					callTask.setTarget("SDK.save");			
+					callTask.execute();	
+			
+				}
+				var callTask = project.createTask("antcall");
+				callTask.setTarget(project.getProperty('SDK.configure.context'));			
+				callTask.execute();			
+			}
+			function trace( str )
+			{
+				System.out.print( str+'\n');
+			}			
+			removeSelected();
+		]]>
+		</script>
+		
+	</target>
+	<target name="SDK.save">
+		<echoproperties destfile="${preferencesDir}/${preferencesFile}">
+		    <propertyset>
+		      <propertyref prefix="es.xperiments.fdt.configuration"/>
+		    </propertyset>
+		</echoproperties>
+	</target>
+
+</project>

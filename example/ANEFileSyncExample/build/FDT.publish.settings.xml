@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="FDT PUBLISH SETTINGS" basedir="." default="IOS.Publish Settings">
+
+	<!-- IMPORT JARS -->
+	<taskdef name="antform" classname="com.sardak.antform.AntForm" classpath="jars/antform.jar"/>
+	<taskdef resource="net/sf/antcontrib/antlib.xml" classpath="jars/ant-contrib-1.0b3.jar"/>
+
+	<!-- PROJECT PROPERTIES -->
+	<xmlproperty file="../.project" keepRoot="true"/>
+	
+    <propertyregex property="preferencesDir"
+              input="${osgi.instance.area}.metadata/.plugins/es.xperiments.fdt"
+              regexp="file:"
+              replace=""
+              casesensitive="false" />	
+	<property name="preferencesFile" value="fdt.properties"/>	
+	
+	
+	
+	<!-- SAVE PREFERENCES -->
+	<target name="IOS.save" depends="JS.app,JS.deploy"></target>
+
+	<!-- DEPLOY CURRENT TARGET -->
+	<target name="IOS.deploy" depends="IOS.save">
+		<property file="properties/es.xperiments.fdt.compile.gui.properties"></property>
+		<ant antfile="builders/${es.xperiments.fdt.compile.IOS.deploy.target}.xml" target="IOS.deploy"/>
+	</target>
+	
+	<!-- DEPLOY LAST TARGET -->
+	<target name="IOS.Publish Last" description=" ">
+		<property file="properties/es.xperiments.fdt.compile.gui.properties"></property>
+		<ant antfile="builders/${es.xperiments.fdt.compile.IOS.deploy.target}.xml" target="IOS.deploy"/>
+	</target>	
+	
+	<target name="JS.deploy">
+		<property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+		<script language="javascript" src="${basedir}/js/deployGenerator.js" manager="bsf" classpath="jars/*.jar;">
+			<classpath>
+					   <fileset dir="jars" includes="*.jar"></fileset>
+			</classpath>
+		</script>
+	</target>
+
+	
+	<!-- CHECK GENERAL PREFERENCES PRESENCE -->
+	<target name="JS.checkGlobalPrefs">
+		<property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+		<script language="javascript" manager="bsf" classpath="jars/*.jar;">
+			<classpath>
+					   <fileset dir="jars" includes="*.jar"></fileset>
+			</classpath>
+			<![CDATA[
+				importPackage(java.lang);
+				importPackage(java.io);
+				var generalPreferencesDir = project.getProperty('osgi.instance.area').replace('file:','')+'.metadata/.plugins/es.xperiments.fdt';
+				var generalPreferencesFilePath = generalPreferencesDir+'/fdt.properties';
+				var generalPreferencesFile = new File(generalPreferencesFilePath);
+				if( !generalPreferencesFile.exists() )
+				{
+					var directory = new File( generalPreferencesDir );
+					directory.mkdir();
+					var outputfile = new BufferedWriter(new FileWriter( generalPreferencesFilePath ));
+					var propLines = 
+					[
+						"es.xperiments.fdt.configuration.avaliableSDK=",
+						"es.xperiments.fdt.configuration.avaliableSDKDescriptions=",
+						"es.xperiments.fdt.configuration.flexSDK="
+					];
+			
+					for( var i=0; i<propLines.length; i++ )
+					{
+						outputfile.write( propLines[i] );
+						outputfile.newLine();
+					}
+					outputfile.close();			
+			
+				}
+			]]>
+		</script>
+		
+	</target>	
+
+	<target name="SDK.configure">
+		<ant antfile="buildHelpers/SDK.configure.xml" target="SDK.editFromBuild"/>
+	</target>
+	<target name="SDK.merge">
+		<ant antfile="buildHelpers/SDK.merge.xml"/>
+	</target>		
+	
+	
+	<!-- MAIN CONFIG WINDOW -->
+	<target name="JS.app">
+		<property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+		<script language="javascript" src="${basedir}/js/fdt.js" manager="bsf" classpath="jars/*.jar;">
+			<classpath>
+					   <fileset dir="jars" includes="*.jar"></fileset>
+			</classpath>
+		</script>
+	</target>	
+	<target name="IOS.Publish Settings" description="Compile SWF" depends="JS.checkGlobalPrefs">
+		<!-- LOAD PROPS -->
+		<property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+		<property file="${preferencesDir}/${preferencesFile}"></property>
+		<script language="javascript">
+			<![CDATA[
+				project.setProperty( 'es.xperiments.fdt.compile.gui.projectname', project.getProperty('projectDescription.name') );
+			]]>
+		</script>
+		<antform title="FDT Free Deployer" save="properties/es.xperiments.fdt.compile.gui.properties" loop="false">
+			<tab label="Main"/>
+			
+			
+				<textProperty fontsize="1" label="Project Name" property="es.xperiments.fdt.compile.gui.projectname" editable="false" required="true"/>
+				<fileSelectionProperty allowedExtensions="AS3 Files:as" label="Main Class" property="es.xperiments.fdt.compile.gui.mainclass" required="true"/>
+				
+				<separator/>
+				<label> </label>
+				<label>iOS Digital Signature</label>
+				<separator/>
+				<fileSelectionProperty allowedExtensions="Certificate File:p12" label="Certificate" property="es.xperiments.fdt.compile.IOS.signature.certificate" required="true"/>
+				<textProperty label="Certificate Password" property="es.xperiments.fdt.compile.IOS.signature.password" required="true"/>
+				<fileSelectionProperty allowedExtensions="Provisioning files:mobileprovision" label="Provisioning file" property="es.xperiments.fdt.compile.IOS.signature.provisioning" required="true"/>
+			
+				<separator/>
+				<label> </label>
+				<label>SDK Selection ( Add new SDK's with the "Manage SDK" button )</label>
+				<radioSelectionProperty label="Use SDK" property="es.xperiments.fdt.compile.selectedSDK" values="${es.xperiments.fdt.configuration.avaliableSDKDescriptions}"/>
+	
+				<buttonbar>
+					<button type="ok" label="Manage SDK's" target="SDK.configure"/>
+					<button type="ok" label="Merge AIR SDK" target="SDK.merge"/>
+				</buttonbar>			
+				
+			<tab label="General"/>
+			
+				<textProperty label="Application Name" property="es.xperiments.fdt.compile.IOS.app.name"/>
+				<!-- <textProperty label="File Name" property="es.xperiments.fdt.compile.IOS.app.filename"/> -->
+				<textProperty label="Application ID" property="es.xperiments.fdt.compile.IOS.app.id"/>
+				<textProperty label="Application Version" property="es.xperiments.fdt.compile.IOS.app.version"/>
+				<booleanProperty label="Autoincrement Version Number" property="es.xperiments.fdt.compile.IOS.app.autoversionnumber"/>
+				<textProperty label="AIR SDK Namespace" property="es.xperiments.fdt.compile.IOS.app.namespace"/>
+				
+	
+				<separator/>
+	
+				<selectionProperty label="Aspect Ratio" property="es.xperiments.fdt.compile.IOS.app.aspectratio" values="portrait;landscape;auto" separator=";"/>     
+				<booleanProperty label="Fullscreen" property="es.xperiments.fdt.compile.IOS.app.fullscreen"/>
+				<booleanProperty label="Auto Orientation" property="es.xperiments.fdt.compile.IOS.app.autoorientation"/>
+				<booleanProperty label="Allow Browser Invocation" property="es.xperiments.fdt.compile.IOS.app.allowbrowserinvocation"/>
+				
+				<separator/>
+	
+				<selectionProperty label="Rendering Mode" property="es.xperiments.fdt.compile.IOS.app.rendermode" values="auto;cpu;gpu;direct" separator=";"/>
+				<selectionProperty label="Compatible Devices" property="es.xperiments.fdt.compile.IOS.app.compatibledevices" values="iPhone only;iPad only;iPhone/iPad" separator=";"/>
+				<selectionProperty label="Resolution" property="es.xperiments.fdt.compile.IOS.app.resolution" values="standard;high" separator=";"/>
+				
+			<tab label="Custom"/>
+				
+				<booleanProperty label="Custom InfoAdditions" property="es.xperiments.fdt.compile.IOS.app.custominfoadditions"/>
+				<multiLineTextProperty tabsize="4" label="InfoAdditions" property="es.xperiments.fdt.compile.gui.infoadditions" rows="20"/>
+				<button label="Common InfoAdditions List" type="ok" target="infoAdditionsHelp" loopexit="false"/>
+			
+				<separator/>
+			
+				<booleanProperty label="Custom Entitlements" property="es.xperiments.fdt.compile.IOS.app.customentitlements"/>
+				<multiLineTextProperty tabsize="4" label="Entitlements" property="es.xperiments.fdt.compile.gui.entitlements" rows="20"/>
+				<!-- <button label="Common InfoAdditions List" type="ok" target="infoAdditionsHelp" loopexit="false"/> -->
+			
+			
+			<tab label="Deploy"/>		
+			
+				<booleanProperty label="Install to Device" property="es.xperiments.fdt.compile.IOS.deploy.deviceinstall"/>
+				<radioSelectionProperty label="Deploy to" property="es.xperiments.fdt.compile.IOS.deploy.target" values="ipa-test,ipa-debug,ipa-app-store,ipa-ad-hoc,ipa-debug-interpreter,ipa-debug-interpreter-simulator,ipa-test-interpreter,ipa-test-interpreter-simulator"/>
+
+				<separator/>			
+				<fileSelectionProperty directoryChooser="true" label="Platform SDK" property="es.xperiments.fdt.compile.IOS.deploy.platformsdk"/>
+				<fileSelectionProperty directoryChooser="true" label="Platform SDK - Simulator" property="es.xperiments.fdt.compile.IOS.deploy.platformsdksimulator"/>
+			
+				<separator/>
+				<checkSelectionProperty editable="false" label="Include Files" property="es.xperiments.fdt.compile.IOS.fileselector.fileListToDelete" values="${es.xperiments.fdt.compile.IOS.fileselector.includedFiles}"/>
+				<button label="Manage Files" type="ok" target="FileSelector.gui"/>
+			
+			<tab label="Compiler"/>
+				<!-- <fileSelectionProperty directoryChooser="true" label="Output SWF dir" property="es.xperiments.fdt.compile.gui.target" required="true"/> -->
+				<!-- <booleanProperty label="Debug:" property="es.xperiments.fdt.compile.gui.debug"/> -->
+				<!-- <booleanProperty label="Profile:" property="es.xperiments.fdt.compile.gui.profile"/> -->
+				<!-- <separator/> -->
+				
+				<!-- <booleanProperty label="Omit Trace Staments" property="es.xperiments.fdt.compile.gui.omittracestaments"/> -->
+				<booleanProperty label="Use custom compiler arguments" property="es.xperiments.fdt.compile.gui.usecustomcompilerarguments"/>
+				<multiLineTextProperty rows="20" label="Custom Compiler Arguments:" property="es.xperiments.fdt.compile.gui.customcompilerarguments"/>
+
+				<separator/>
+
+				<booleanProperty label="Auto add ClassPaths" property="es.xperiments.fdt.compile.gui.autoaddclasspath"/>
+				<booleanProperty label="Auto add SWCS" property="es.xperiments.fdt.compile.gui.autoaddswcs"/>
+				<booleanProperty label="Use Runtime Shared Libraries" property="es.xperiments.fdt.compile.gui.autoaddrsls"/>
+
+			<tab label="Debugger"/>
+				
+				<booleanProperty label="Start Debuger after Deploy" property="es.xperiments.fdt.compile.IOS.debug.autostart"/>
+				<separator/>
+
+				<radioSelectionProperty label="Select Debugger" property="es.xperiments.fdt.compile.IOS.debug.app" values="FLEX SDK Debugger,Monsterdebugger"/>
+				<fileSelectionProperty label="Monsterdebugger app" allowedExtensions="Application Files:app" property="es.xperiments.fdt.compile.IOS.debug.monsterdebuggerbin"/>
+				<separator/>
+				
+				<multiLineTextProperty tabsize="4" label="FLEX SDK debugger commands" property="es.xperiments.fdt.compile.IOS.debug.fdbinit" rows="20"/>			
+			
+			<tab label="Icons"/>
+				<fileSelectionProperty allowedExtensions="PNG Files:png" label="29x29" property="es.xperiments.fdt.compile.IOS.icons.icon29"/>
+				<fileSelectionProperty allowedExtensions="PNG Files:png" label="48x48 (iPad)" property="es.xperiments.fdt.compile.IOS.icons.icon48"/>
+				<fileSelectionProperty allowedExtensions="PNG Files:png" label="57x57" property="es.xperiments.fdt.compile.IOS.icons.icon57"/>
+				<fileSelectionProperty allowedExtensions="PNG Files:png" label="72x72 (iPad)" property="es.xperiments.fdt.compile.IOS.icons.icon72"/>
+				<fileSelectionProperty allowedExtensions="PNG Files:png" label="114x114" property="es.xperiments.fdt.compile.IOS.icons.icon114"/>
+				<fileSelectionProperty allowedExtensions="PNG Files:png" label="512x512" property="es.xperiments.fdt.compile.IOS.icons.icon512"/>
+				<fileSelectionProperty allowedExtensions="PNG Files:png" label="1024x1024" property="es.xperiments.fdt.compile.IOS.icons.icon1024"/>
+			
+			<tab label="Languages"/>
+				<checkSelectionProperty label="Select the languages below that will be supported in your application:" property="es.xperiments.fdt.compile.IOS.app.languages" values="en English,zh Chinese,cs Czech,nl Dutch,fr French,de German,it Italian,ja Japanese,ko Korean,pl Polish,pt Portuguese,ru Russian,es Spanish,sv Swedish,tr Turkish"/>
+			
+
+			
+			<controlBar>
+				<button label="Publish IPA" type="ok" target="IOS.deploy" loopexit="true"/>
+				<button label="Apply" type="ok" target="IOS.save" loopexit="true"/>
+				<button label="Exit" type="cancel" loopexit="true"/>
+			</controlBar>
+		</antform>
+	</target>
+	<target name="infoAdditionsHelp">
+<property name="CommonInfoAdditions">
+<![CDATA[
+	*************************************************
+	* Support for audio playback in background 	*
+	*************************************************
+
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+
+	*************************************************
+	* Support for location updates in background	*
+	*************************************************
+
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
+
+
+	*************************************************
+	* Exit app on suspend 	 			*
+	*************************************************
+
+	<key>UIApplicationExitsOnSuspend</key>
+		<true/>
+
+	*************************************************
+	* Remove icon gloss effect 			*
+	* from an Adobe Air iOS app 	 		*
+	*************************************************
+
+	<key>UIPrerenderedIcon</key> 
+		<true/> 
+
+	*************************************************
+	* Enable iTunes File Sharing 			*
+	*************************************************
+
+	<key>UIFileSharingEnabled</key>
+		<true/>        
+
+	*************************************************
+	* Compatibility Filter			 	*
+	*************************************************
+
+	/* FROM
+
+		telephony
+		wifi
+		sms
+		still-camera
+		auto-focus-camera
+		front-facing-camera
+		camera-flash
+		video-camera
+		accelerometer
+		location-services
+		gps
+		microphone
+
+	*/
+
+	<key>UIRequiredDeviceCapabilities</key> 
+	<array> 
+	    <string>microphone</string> 
+	    <string>still-camera</string> 
+	</array>
+
+	*************************************************
+	* Custom URL Schemes 		*
+	*************************************************
+
+	<key>CFBundleURLTypes</key> 
+	<array> 
+	    <dict> 
+	         <key>CFBundleURLSchemes</key> 
+	        <array> 
+	            <string>example</string> 
+	        </array> 
+	        <key>CFBundleURLName</key> 
+	        <string>com.example.app</string> 
+	    </dict> 
+	</array>	
+
+	*************************************************
+	* Require Wifi 					*
+	*************************************************
+
+	<key>UIRequiresPersistentWiFi</key> 
+		<string>NO</string> 
+
+ 
+]]>
+</property>
+		<antform>
+			<multiLineTextProperty tabsize="4" label="Common Infoadditions" property="CommonInfoAdditions" rows="40"/>			
+			<controlBar>
+				<button label="ok" type="ok" target="IOS.Publish Settings"/>
+			</controlBar>			
+		</antform>
+	</target>
+	
+	
+	
+	<!-- FILE SELECTOR GUI -->
+	
+	<target name="FileSelector.gui">
+		<property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+		<antform title="File Selection" save="properties/es.xperiments.fdt.compile.gui.properties" loop="false">
+			<checkSelectionProperty label="Included Files" property="es.xperiments.fdt.compile.IOS.fileselector.fileListToDelete" values="${es.xperiments.fdt.compile.IOS.fileselector.includedFiles}"/>
+			<controlbar>
+				<button label="+ File" type="ok" target="FileSelector.file"/>
+				<button label="+ Dir" type="ok" target="FileSelector.dir"/>
+				<button label="- Remove Selected" type="ok" target="FileSelector.deleteFiles"/>
+				<button label="Ok" type="ok" target="IOS.settings"/>
+			</controlbar>
+		</antform>
+	</target>	
+	
+	<target name="FileSelector.file">
+		<property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+		<antform title="Include Files" save="properties/es.xperiments.fdt.compile.gui.properties">
+			<fileSelectionProperty label="Select File" property="es.xperiments.fdt.compile.IOS.fileselector.currentFile" required="true"/>
+			<controlbar>
+				<button label="ok" type="ok" target="FileSelector.updateFile"/>
+				<button label="cancel" type="cancel"/>
+			</controlbar>
+		</antform>
+	</target>	
+	
+	<target name="FileSelector.dir">
+		<property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+		<antform title="File Selection" save="properties/es.xperiments.fdt.compile.gui.properties">
+			<fileSelectionProperty directoryChooser="true" label="Select File" property="es.xperiments.fdt.compile.IOS.fileselector.currentFile" required="true"/>
+			<controlbar>
+				<button label="ok" type="ok" target="FileSelector.updateFile"/>
+				<button label="cancel" type="cancel"/>
+			</controlbar>
+		</antform>
+	</target>	
+	
+	
+	<!-- FILE SELECTOR JS -->
+	<target name="FileSelector.updateFile">
+		<property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+		<script language="javascript" src="${basedir}/js/fileSelector.js" manager="bsf" classpath="jars/*.jar;">
+			<classpath>
+					   <fileset dir="jars" includes="*.jar"></fileset>
+			</classpath>
+		</script>
+		<antcall target="FileSelector.gui"></antcall>
+	</target>
+		
+	<target name="FileSelector.deleteFiles">
+		<property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+		<script language="javascript" src="${basedir}/js/fileSelector.js" manager="bsf" classpath="jars/*.jar;">
+			<classpath>
+					   <fileset dir="jars" includes="*.jar"></fileset>
+			</classpath>
+		</script>
+		<antcall target="FileSelector.gui"></antcall>
+	</target>		
+
+</project>

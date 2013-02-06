@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+    
+    <head>
+        <meta charset="UTF-8">
+        <title>Upload Image Example</title>
+        <link rel="stylesheet" href="/___templates___/style.css">
+        <script type="text/javascript" src="/___templates___/IOSFileSync.js"></script>
+        <script type="text/javascript">
+            function uploadSuccess(data)
+            {
+                alert('Upload Completed');
+            }
+
+            function uploadFail(data)
+            {
+                alert('Upload Failed');
+            }
+
+            function uploadProgress(progress)
+            {
+            	document.getElementById('percentage').value = progress+'%';
+            }
+
+            function uploadImage(file)
+            {
+                IOSFileSync.upload(file).then(uploadSuccess, uploadFail, uploadProgress);
+            }
+
+            function listUploadDirectorySuccess(data)
+            {
+                var textArea = document.getElementById('listResult');
+                var output = '';
+                for (var i = 0, total = data.length; i < total; i++)
+                {
+                    output += data[i].name + '\n';
+                }
+                textArea.value = output;
+            }
+
+            function listUploadDirectoryFail(error)
+            {
+                alert('List Upload Directory Failed with error:' + error);
+            }
+
+            function listUploadDirectory()
+            {
+                IOSFileSync.listDir('/uploads')
+                    .then(listUploadDirectorySuccess, listUploadDirectoryFail);
+            }
+        </script>
+    </head>
+    
+    <body>
+        
+<h3>Select a image to upload. The image will be shown at your device.</h3>
+
+        <form>
+            <input type="file" accept="image/*" onchange="uploadImage(this.files[0])"><br/>
+            Progress: <input type="text" id="percentage">
+        </form>
+        <br/>
+        <br/>
+        
+<h3>List upload directory</h3>
+
+        <a href="javascript:listUploadDirectory()">Get upload dir contents</a>
+        <br>
+        <textarea style="width:400px;height:400px" id="listResult"></textarea>
+    </body>
+
+</html>

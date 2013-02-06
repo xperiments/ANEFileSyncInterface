@@ -1,0 +1,19 @@
+AnePlatforms//Id.lib/ANEFileSync.ane=es.xperiments.ane.filesyncinterface.ANEFileSync
+AnePlatforms//Platforms.lib/ANEFileSync.ane=iPhone-ARM,iPhone-x86
+AnesChanged=4
+com.powerflasher.fdt.core.CompatiblePlayers=External_SWF_Viewer\:Browser\:Standalone_Flash_Player
+com.powerflasher.fdt.core.CompilerArguments=-load-config\="{flexSDK}/frameworks/air-config.xml"\n-static-link-runtime-shared-libraries\=true\n-target-player\={playerVersion}\n-library-path+\="{flexSDK}/frameworks/locale/en_US"\n-default-size\=550,400
+com.powerflasher.fdt.core.DefaultOutputFolder=bin
+com.powerflasher.fdt.core.DefaultPlayer=External_SWF_Viewer
+com.powerflasher.fdt.core.Language=AS3
+com.powerflasher.fdt.core.PassClasspath=true
+com.powerflasher.fdt.core.PassExterns=false
+com.powerflasher.fdt.core.PassMainclass=true
+com.powerflasher.fdt.core.PassRsls=false
+com.powerflasher.fdt.core.PassSwcs=true
+com.powerflasher.fdt.core.PlatformType=WEB
+com.powerflasher.fdt.core.PlayerVersion=11.5
+com.powerflasher.fdt.core.ProjectTypeHint=AIR Module
+com.powerflasher.fdt.core.Runtime=Flash_Player
+com.powerflasher.fdt.core.SdkName=AIR3.5
+eclipse.preferences.version=1

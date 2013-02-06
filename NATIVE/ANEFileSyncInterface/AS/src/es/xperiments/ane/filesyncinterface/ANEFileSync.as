@@ -52,7 +52,7 @@ package es.xperiments.ane.filesyncinterface
 				__context = ExtensionContext.createExtensionContext("es.xperiments.ane.filesyncinterface.ANEFileSync",null);
 				__context.call('initialize');
 				__context.addEventListener(StatusEvent.STATUS,onContextStatusEvent);
-				setEnabledActions( _avaliableActions.join('|') );
+				setEnabledActions( _avaliableActions.join(',') );
 			}
 		}
 
@@ -118,7 +118,7 @@ package es.xperiments.ane.filesyncinterface
 		public function setEnabledActions( actions:String ):void
 		{
 
-			const actionsArray:Array = actions.split('|');
+			const actionsArray:Array = actions.split(',');
 			const actionsOutput:Array=[];
 			for( var i:uint=0, total:uint = actionsArray.length; i<total; i++ )
 			{
@@ -129,7 +129,7 @@ package es.xperiments.ane.filesyncinterface
 		};
 		public function getEnabledActions( ):String
 		{
-			return _enabledActions;
+			return _enabledActions.split('/actions.').join('');
 		};
 
 		// DIR LISTING

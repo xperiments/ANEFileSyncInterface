@@ -46,7 +46,7 @@
         <delete file="${app.rootdir}/library.swf"/>
         <delete file="${app.rootdir}/${app.swcfilename}"/>
 
-        <copy file="${app.releasedir}/ANEFileSync.ane" tofile="/Volumes/BLANK1/PROJECTS/LABS/OPEN/ANEFileSyncTest/lib/ANEFileSync.ane"/>
+        <copy file="${app.releasedir}/ANEFileSync.ane" tofile="/Volumes/BLANK1/PROJECTS/LABS/OPEN/ANEFileSyncExample/lib/ANEFileSync.ane"/>
         <echo>DONE!! ANE EXTENSION GENERATED AT ${app.releasedir}/ANEFileSync.ane</echo>
     </target>
     <target name="update.Descriptor">

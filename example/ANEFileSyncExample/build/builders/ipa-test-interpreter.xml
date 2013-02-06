@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="IOS.ipa-test-interpreter" basedir="." default="IOS.deploy">
+  <property name="IOS.deployer.currentFile" value="ipa-test-interpreter.xml"/>
+  <target depends="SWF.autoincrementBuild,SWF.compile,IOS.package,IPA.deviceinstallDevice" description="IOS.deploy" name="IOS.deploy"/>
+  <target depends="SWF.autoincrementBuild" name="IOS.package">
+    <property file="properties/es.xperiments.fdt.compile.gui.props"/>
+    <exec dir="../bin" executable="${es.xperiments.fdt.compile.sdk}/bin/adt" failonerror="true">
+      <arg value="-package"/>
+      <arg value="-target"/>
+      <arg value="${es.xperiments.fdt.compile.IOS.deploy.target}"/>
+      <arg value="-storetype"/>
+      <arg value="pkcs12"/>
+      <arg value="-keystore"/>
+      <arg value="${es.xperiments.fdt.compile.IOS.signature.certificate}"/>
+      <arg value="-storepass"/>
+      <arg value="${es.xperiments.fdt.compile.IOS.signature.password}"/>
+      <arg value="-provisioning-profile"/>
+      <arg value="${es.xperiments.fdt.compile.IOS.signature.provisioning}"/>
+      <arg value="${es.xperiments.fdt.compile.gui.projectname}.ipa"/>
+      <arg value="${es.xperiments.fdt.compile.gui.projectname}-app.xml"/>
+      <arg value="${es.xperiments.fdt.compile.gui.projectname}.swf"/>
+      <arg value="AppIcons"/>
+      <arg value="-C"/>
+      <arg value="/Volumes/BLANK1/PROJECTS/LABS/OPEN/ANEFileSyncExample/bundle"/>
+      <arg value="Web"/>
+      <arg value="-extdir"/>
+      <arg value="/Volumes/BLANK1/PROJECTS/LABS/OPEN/ANEFileSyncExample/lib"/>
+      <arg value="-platformsdk"/>
+      <arg value="${es.xperiments.fdt.compile.IOS.deploy.platformsdk}"/>
+    </exec>
+  </target>
+  <target name="SWF.compile">
+    <property file="properties/es.xperiments.fdt.compile.gui.props"/>
+    <fdt.launch.application autoaddclasspath="${es.xperiments.fdt.compile.gui.autoaddclasspath}" autoaddrsls="${es.xperiments.fdt.compile.gui.autoaddrsls}" autoaddswcs="${es.xperiments.fdt.compile.gui.autoaddswcs}" compilerarguments="${es.xperiments.fdt.compile.gui.compilerarguments}" debug="false" mainclass="../${es.xperiments.fdt.compile.gui.mainclass}" profile="${es.xperiments.fdt.compile.gui.profile}" projectname="${es.xperiments.fdt.compile.gui.projectname}" target="../${es.xperiments.fdt.compile.gui.target}/${es.xperiments.fdt.compile.gui.projectname}.swf"/>
+  </target>
+  <!-- DEBUG UTILS -->
+  <target description="SWF.debug" name="SWF.debug">
+    <property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+    <exec executable="${java.home}/bin/jps" output=".pid"/>
+    <script classpath="jars/*.jar;" language="javascript" manager="bsf" src="${basedir}/js/deploy.js">
+      <classpath>
+        <fileset dir="jars" includes="*.jar"/>
+      </classpath>
+    </script>
+    <java failonerror="true" fork="true" inputstring="" jar="${es.xperiments.fdt.compile.sdk}/lib/fdb.jar">
+      <arg value="-unit"/>
+    </java>
+  </target>
+  <target description="SWF.debug.MonsterDebugger" name="SWF.debug.MonsterDebugger">
+    <property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+    <exec executable="${es.xperiments.fdt.compile.IOS.debug.monsterdebuggerbin}/Contents/MacOS/Monster Debugger" spawn="yes"/>
+  </target>
+  <!-- AUTOINCREMENT VERSION -->
+  <target name="SWF.autoincrementBuild">
+    <property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+    <script classpath="jars/*.jar;" language="javascript" manager="bsf" src="${basedir}/js/deploy.js">
+      <classpath>
+        <fileset dir="jars" includes="*.jar"/>
+      </classpath>
+    </script>
+  </target>
+  <!-- DEPLOY UTILS -->
+  <target depends="IPA.uninstall,IPA.install,IPA.launch" description="IPA.deviceinstallSimulator" name="IPA.deviceinstallSimulator"/>
+  <target depends="IPA.uninstall,IPA.install" description="IPA.deviceinstallDevice" name="IPA.deviceinstallDevice"/>
+  <target name="IPA.uninstall">
+    <property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+    <java failonerror="false" fork="true" jar="${es.xperiments.fdt.compile.sdk}/lib/adt.jar">
+      <arg value="-uninstallApp"/>
+      <arg value="-platform"/>
+      <arg value="ios"/>
+      <!-- AIR 3.4 SDK -->
+      <arg value="-platformsdk"/>
+      <arg value="${es.xperiments.fdt.compile.IOS.deploy.platformsdk}"/>
+      <!-- APP ID -->
+      <arg value="-appid"/>
+      <arg value="${es.xperiments.fdt.compile.IOS.app.id}"/>
+    </java>
+  </target>
+  <target name="IPA.install">
+    <property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+    <java failonerror="true" fork="true" jar="${es.xperiments.fdt.compile.sdk}/lib/adt.jar">
+      <arg value="-installApp"/>
+      <arg value="-platform"/>
+      <arg value="ios"/>
+      <!-- AIR 3.4 SDK -->
+      <arg value="-platformsdk"/>
+      <arg value="${es.xperiments.fdt.compile.IOS.deploy.platformsdk}"/>
+      <arg value="-package"/>
+      <!-- IPA -->
+      <arg value="../${es.xperiments.fdt.compile.gui.target}/${es.xperiments.fdt.compile.gui.projectname}.ipa"/>
+    </java>
+    <tstamp>
+      <format pattern="MM/dd/yyyy hh:mm:ss aa" property="current.time"/>
+    </tstamp>
+    <echo>${current.time}</echo>
+  </target>
+  <target name="IPA.launch">
+    <property file="properties/es.xperiments.fdt.compile.gui.properties"/>
+    <java failonerror="false" fork="true" jar="${es.xperiments.fdt.compile.sdk}/lib/adt.jar">
+      <arg value="-launchApp"/>
+      <arg value="-platform"/>
+      <arg value="ios"/>
+      <!-- AIR 3.4 SDK -->
+      <arg value="-platformsdk"/>
+      <arg value="${es.xperiments.fdt.compile.IOS.deploy.platformsdk}"/>
+      <!-- APP ID -->
+      <arg value="-appid"/>
+      <arg value="${es.xperiments.fdt.compile.IOS.app.id}"/>
+    </java>
+  </target>
+</project>

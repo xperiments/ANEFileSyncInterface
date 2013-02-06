@@ -571,7 +571,8 @@ static FREContext ctx;
             NSString* fileSize = [FileSyncConnection getFileSize:currentPath];
             
             NSDictionary* currentFileData = [NSDictionary dictionaryWithObjectsAndKeys:
-                                             [basePath stringByAppendingString:filePathDir], @"name",
+                                             [basePath stringByAppendingString:filePathDir], @"path",
+                                             filePathDir, @"name",
                                              [NSNumber numberWithBool:isDir],    @"isDir",
                                              fileSize,    @"size",
                                              nil];

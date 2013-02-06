@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="FDT.FREE.MERGE.SDK" basedir=".." default="mergeSDK">
+
+	<!-- IMPORT JARS -->
+	<taskdef name="antform" classname="com.sardak.antform.AntForm" classpath="jars/antform.jar"/>
+	<taskdef resource="net/sf/antcontrib/antlib.xml" classpath="jars/ant-contrib-1.0b3.jar"/>
+
+	<!-- PROJECT PROPERTIES -->
+	<xmlproperty file="../.project" keepRoot="true"/>
+	
+	<target name="returnToMain">
+		<ant antfile="FDT.publish.settings.xml"/>
+	</target>
+			
+	<target name="mergeSDK">
+		<antform title="Merge AIR SDK Utility">
+			<fileSelectionProperty allowedExtensions="Zip Files:zip" label="Flex SDK" property="flexSDK" required="true"/>
+			<fileSelectionProperty allowedExtensions="Tar Files:tbz2" label="AIR SDK" property="airSDK" required="true"/>
+			<textProperty label="SDK Name" property="sdkName" required="true"/>
+			<textproperty label="Target Player" property="targetPlayer" required="true"/>
+			<textproperty label="SWF Version" property="swfVersion" required="true"/>
+			<controlbar>
+				<button type="ok" label="Merge SDK" target="processSDK"/>
+				<button type="cancel" label="Exit" target="returnToMain"/>
+			</controlbar>
+		</antform>
+	</target>
+	<target name="processSDK">
+		<property name="destinationDir" value="/Users/${user.name}/Desktop/${sdkName}"></property>
+
+		<mkdir dir="${destinationDir}"/>
+		<exec dir="${destinationDir}" executable="unzip">
+			<arg value="${flexSDK}"/>
+			<arg value="-d"/>
+			<arg value="${destinationDir}"/>
+		</exec>				
+		<copy file="${airSDK}" todir="${destinationDir}"/>
+		<exec dir="${destinationDir}" executable="tar">
+			<arg value="jxvf"/>
+			<arg value="${airSDK}"/>
+		</exec>	
+		
+		<delete file="${destinationDir}/${airSDK}"/>
+		
+		<script language="javascript" manager="bsf" classpath="jars/*.jar;">
+			<classpath>
+					   <fileset dir="jars" includes="*.jar"></fileset>
+			</classpath>			
+		<![CDATA[
+			importPackage(java.lang);
+			importPackage(java.io);
+			importPackage(java.util.zip);
+			importClass(java.util.Properties);
+			importClass(java.util.Scanner);			
+			
+			var XMLLoader = (function(undefined) {
+				
+				var load = function( file )
+				{
+					var data = new String(org.apache.tools.ant.util.FileUtils.readFully(new java.io.FileReader( file )));
+					data = data.replace(/<!--[\s\S]*?-->/g,'');
+					if( data.indexOf('<?xml') == 0 )
+					{
+						var lines = data.match(/[^\r\n]+/g);
+							lines.shift();
+						
+						return new XML( lines.join('') );
+					}
+					else
+					{
+						
+						return new XML( data );
+					}
+				}
+				
+				return {
+					load:load
+				};
+
+			})();
+			var buildDir;
+			var sdkDir;
+
+			var air_config;
+			function init()
+			{
+				buildDir = project.getProperty('basedir');
+			
+				sdkDir = getProperty('destinationDir');
+				var targetPlayer = getProperty('targetPlayer');
+				var swfVersion = getProperty('swfVersion');
+			
+				System.out.print('\nPatch... Framework Configs\n');
+				replaceConfigValues( sdkDir+'/frameworks/air-config.xml' , targetPlayer, swfVersion);
+				replaceConfigValues( sdkDir+'/frameworks/airmobile-config.xml' , targetPlayer, swfVersion);
+				replaceConfigValues( sdkDir+'/frameworks/flex-config.xml' , targetPlayer, swfVersion);
+				
+				System.out.print('\nPatch... Flex SDK Description Name\n');
+				replaceDescription( sdkDir+'/flex-sdk-description.xml' , sdkName );
+			
+				System.out.print('\Patch... Java memory settings in jvm.config\n');
+				replaceJavaMem(sdkDir+'/bin/jvm.config')
+				System.out.print('\nDone.\n');
+				System.out.print('\nYour merged new AIR SDK is located at\n');
+				System.out.print( getProperty('destinationDir') );
+			}
+			
+			function replaceDescription( file, name )
+			{
+				var data = new String(org.apache.tools.ant.util.FileUtils.readFully(new java.io.FileReader( file )));
+				data = replaceTagValue(data,'name',name);
+				saveConfig( file , data );
+			
+			}		
+			
+			function replaceJavaMem( file )
+			{
+				var data = new String(org.apache.tools.ant.util.FileUtils.readFully(new java.io.FileReader( file )));
+				data = data.replace("java.args=-Xmx384m -Dsun.io.useCanonCaches=false","java.args=-Xmx1024m -Dsun.io.useCanonCaches=false");
+				saveConfig( file , data );			
+				
+			}
+			
+			function replaceConfigValues( file , target_player, swf_version )
+			{
+				var data = new String(org.apache.tools.ant.util.FileUtils.readFully(new java.io.FileReader( file )));
+
+				data = replaceTagValue(data,'target-player',target_player);
+				data = replaceTagValue(data,'swf-version',swf_version);
+				saveConfig( file , data );
+			
+			}
+			function replaceTagValue( str, tag, newValue )
+			{
+				var start = str.indexOf(tag)+tag.length+1;
+				var end = str.indexOf('/'+tag)-1;
+				var content = str.substring( start, end ) ;
+				var startContent = str.substring(0,start);
+				var endContent = str.substring(end);
+				return startContent+newValue+endContent;
+			}
+			function saveConfig( destinationFile, data )
+			{
+				var outputfile = new BufferedWriter(new FileWriter( destinationFile ));
+				outputfile.write( data );
+				outputfile.close();
+			}
+			function getProperty( name )
+			{
+				return project.getProperty( name )+'';
+			}
+			function setProperty( name , value )
+			{
+				project.setProperty( name, value );
+			}			
+			
+			init();
+		]]>
+		</script>
+		<ant antfile="FDT.publish.settings.xml"/>
+	</target>
+	
+
+</project>
