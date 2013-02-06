@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="ANEFileSync" default="build-extension" basedir=".">
+    
+    <property file="local.properties" />
+    <property file="build.properties" />
+    
+    <script language="javascript">
+        var logger = project.getBuildListeners().firstElement();
+            logger.setMessageOutputLevel( 3 );
+    </script>
+    <target name="clean">
+    	<echo>CLEANING...</echo>
+        <delete dir="${app.builddir}"/>
+        <delete dir="${app.releasedir}"/>
+        <mkdir dir="${app.builddir}"/>
+        <mkdir dir="${app.releasedir}"/> 
+        <delete file="${app.rootdir}/library.swf"/>
+        <delete file="${app.rootdir}/${app.swcfilename}"/>
+        <echo>DONE -> CLEANING PROJECT</echo>
+    </target>
+    
+    <target name="build-extension" depends="clean,update.BuildNumber,update.Descriptor">
+    	<echo>BUILDING SWC...</echo>
+        <exec executable="${ACOMPC}">
+            <arg line="
+                -output ${app.builddir}/${app.swcfilename}
+                -load-config+=${app.configfile}
+                +configname=airmobile
+                -swf-version=15
+            "/>
+        </exec>
+        <echo>EXTRACTING FILES FROM GENERATED SWC...</echo>
+        <copy file="${app.builddir}/${app.swcfilename}" tofile="${app.rootdir}/${app.swcfilename}"/>
+        <unzip src="${app.builddir}/${app.swcfilename}" dest="${app.rootdir}"/>
+        <delete file="${app.rootdir}/catalog.xml"/>
+        <echo>GENERATING ANE EXTENSION...</echo>
+        <exec executable="${ADT}">
+                    <arg line="
+                        -package -target ane ${app.releasedir}/ANEFileSync.ane ${app.extensionxmlfile}.xml 
+                        -swc ../${app.swcfilename}
+                        -platform iPhone-ARM -C ../ library.swf -C ../IOS/ANEFileSync/DerivedData/ANEFileSync/Build/Products/Release-iphoneos libANEFileSync.a
+                        -platform iPhone-x86 -C ../ library.swf -C ../IOS/ANEFileSync/DerivedData/ANEFileSync/Build/Products/Debug-iphonesimulator libANEFileSync.a
+                    "/>
+        </exec>
+        <echo>CLEANING UNNECESARY FILES...</echo>
+        <delete file="${app.rootdir}/library.swf"/>
+        <delete file="${app.rootdir}/${app.swcfilename}"/>
+
+        <copy file="${app.releasedir}/ANEFileSync.ane" tofile="/Volumes/BLANK1/PROJECTS/LABS/OPEN/ANEFileSyncTest/lib/ANEFileSync.ane"/>
+        <echo>DONE!! ANE EXTENSION GENERATED AT ${app.releasedir}/ANEFileSync.ane</echo>
+    </target>
+    <target name="update.Descriptor">
+		<copy file="${app.extensionxmlfile}.tpl" tofile="${app.extensionxmlfile}.xml" overwrite="true"/>
+		<replace file="${app.extensionxmlfile}.xml" propertyFile="build.number">
+			<replacefilter token="@majorVersion@" property="build.majorVersion" />
+			<replacefilter token="@minorVersion@" property="build.minorVersion" />			
+			<replacefilter token="@buildNumber@" property="build.number" />
+		</replace>   
+    </target>
+	<target name="update.BuildNumber">
+		<echo>INCREMENTING BUILD NUMBER...</echo>
+		<propertyfile file="build.number">
+			<entry key="build.number" type="int" default="0" operation="+" pattern="0" />
+		</propertyfile>	
+	</target>
+	<target name="update.MinorVersion">
+		<propertyfile file="build.number">
+			<entry key="build.minorVersion" type="int" default="0" operation="+" pattern="0" />
+			<entry key="build.number" type="int" value="0" operation="=" pattern="0" />
+		</propertyfile>	
+	</target>
+	<target name="update.MajorVersion">
+		<propertyfile file="build.number">
+			<entry key="build.majorVersion" type="int" default="0" operation="+" pattern="0" />		
+			<entry key="build.minorVersion" type="int" value="0" operation="=" pattern="0" />
+			<entry key="build.number" type="int" value="0" operation="=" pattern="0" />
+		</propertyfile>	
+	</target>
+</project>
+		
