@@ -13,7 +13,7 @@ It lets you to:
 
 ## Usage
 
-Include the ANEFileSync.ane to your project.(Located inside the NATIVE/ANEFileSyncInterface/PRODUCTS dir ).
+Include the ANEFileSync.ane to your project.(Get it inside the <a href="https://github.com/xperiments/ANEFileSyncInterface/tree/master/NATIVE/ANEFileSyncInterface/PRODUCTS">NATIVE/ANEFileSyncInterface/PRODUCTS</a> dir ).
 Current ANE provides Device & Simulator support.
 
 **There is a known bug in the simulator that prevents to upload files,so the application quits unexpectedly.**
@@ -171,9 +171,9 @@ The current avaliable properties passed to the template are:
             {{modification}} // modification date
         {{/files}}
 
-Basic Document root example is located at <a href="ANEFileSyncInterface/BasicDocumentRoot">BasicDocumentRoot directory</a>
+Basic Document root example is located at <a href="https://github.com/xperiments/ANEFileSyncInterface/tree/master/BasicDocumentRoot">BasicDocumentRoot directory</a>
 
-**Also you can find a working example of DocumentRoot inside the provided example/bundle dir**
+Also you can find a working example of DocumentRoot inside the provided <a href="https://github.com/xperiments/ANEFileSyncInterface/tree/master/example/ANEFileSyncExample/bundle">example/bundle</a> dir
 
 ---
 
